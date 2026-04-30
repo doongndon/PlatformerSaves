@@ -1,5 +1,3 @@
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H2ZNXL5)
-
 # PlatformerSaves (2.2081 Adaptation)
 
 This is an updated version of the original [PlatformerSaves](https://github.com/0x5abe/PlatformerSaves) mod by Sabe, adapted for Geometry Dash version **2.2081** by **BANANCHIKIREAL**.
