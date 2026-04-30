@@ -11,20 +11,21 @@ using namespace util::platform;
 
 bool PSPlayLayer::startSaveGame() {
     if (m_fields->m_savingState != SavingState::Ready || m_isPracticeMode) return false;
-    m_fields->m_savingState = SavingState::Setup;
     CCScene* l_currentScene = CCScene::get();
-    if (l_currentScene) {
-        l_currentScene->runAction(
-            CCSequence::create(
-                CCDelayTime::create(0.0f),
-                CCCallFunc::create(
-                    this,
-                    callfunc_selector(PSPlayLayer::saveGame)
-                ),
-                nullptr
-            )
-        );
+    if (!l_currentScene) {
+        return false;
     }
+    m_fields->m_savingState = SavingState::Setup;
+    l_currentScene->runAction(
+        CCSequence::create(
+            CCDelayTime::create(0.0f),
+            CCCallFunc::create(
+                this,
+                callfunc_selector(PSPlayLayer::saveGame)
+            ),
+            nullptr
+        )
+    );
     return true;
 }
 
@@ -144,9 +145,11 @@ void PSPlayLayer::saveGame() {
             if (m_fields->m_exitAfterSave) {
                 //log::info("Goes into exitAfterSave");
                 m_fields->m_exitAfterSave = false;
-                PauseLayer* l_pauseLayer = static_cast<PauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
+                PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
                 if (l_pauseLayer) {
-                    l_pauseLayer->onQuit(this);
+                    l_pauseLayer->m_fields->m_cancelSave = true;
+                    l_pauseLayer->PauseLayer::onQuit(this);
+                    l_pauseLayer->m_fields->m_cancelSave = false;
                 }
             }
             break;

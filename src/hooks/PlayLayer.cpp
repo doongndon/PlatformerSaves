@@ -4,9 +4,6 @@
 #include "domain/CheckpointGameObjectReference.hpp"
 #include "hooks/PauseLayer.hpp"
 #include "hooks/FMODAudioEngine.hpp"
-#if !defined(GEODE_IS_IOS)
-#include <geode.custom-keybinds/include/Keybinds.hpp>
-#endif
 #include <util/algorithm.hpp>
 #include <util/filesystem.hpp>
 #include <util/platform.hpp>
@@ -31,8 +28,8 @@ using namespace util::platform;
 
 // Max PSF version is 31 cause after that bitfield is broken
 PSPlayLayer* s_currentPlayLayer = nullptr;
-char s_psfMagicAndVer[] = "PSF v0.1.1";
-int s_psfVersion = 11;
+char s_psfMagicAndVer[] = "PSF v0.1.2";
+int s_psfVersion = 12;
 
 // overrides
 
@@ -76,8 +73,10 @@ bool PSPlayLayer::init(GJGameLevel* i_level, bool i_useReplay, bool i_dontCreate
 void PSPlayLayer::processCreateObjectsFromSetup() {
     if (!m_fields->m_startedLoadingObjects) {
         m_fields->m_startedLoadingObjects = true;
-        *reinterpret_cast<int*>(geode::base::get()+UNIQUE_ID_OFFSET) = 12;
-        reinterpret_cast<persistenceAPI::PAPlayLayer*>(this)->m_fields->m_uniqueIDBase = *reinterpret_cast<int*>(geode::base::get()+UNIQUE_ID_OFFSET);
+        auto paPlayLayer = reinterpret_cast<persistenceAPI::PAPlayLayer*>(this);
+        if (paPlayLayer->m_fields->m_uniqueIDBase <= 0) {
+            paPlayLayer->m_fields->m_uniqueIDBase = 12;
+        }
     }
     PlayLayer::processCreateObjectsFromSetup();
 }
@@ -170,18 +169,20 @@ void PSPlayLayer::postUpdate(float i_unkFloat) {
 CheckpointObject* PSPlayLayer::markCheckpoint() {
     PSCheckpointObject* l_checkpointObject = static_cast<PSCheckpointObject*>(PlayLayer::markCheckpoint());
 
-    if (l_checkpointObject && savesEnabled() && m_fields->m_inPostUpdate && !m_isPracticeMode) {
+    if (l_checkpointObject && savesEnabled() && !m_isPracticeMode) {
         if (m_fields->m_triedPlacingCheckpoint) {
             m_fields->m_triedPlacingCheckpoint = false;
-        } else if (m_activatedCheckpoint != nullptr) {
-            //log::info("[markCheckpoint] triggered checkpoint");
+        } else {
+            // On GD 2.2081 this may be null even for valid checkpoints.
             l_checkpointObject->m_fields->m_timePlayed = m_timePlayed;
             l_checkpointObject->m_fields->m_timestamp = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+            if (l_checkpointObject->m_fields->m_timestamp <= m_fields->m_lastSavedCheckpointTimestamp) {
+                l_checkpointObject->m_fields->m_timestamp = m_fields->m_lastSavedCheckpointTimestamp + 1;
+            }
             m_fields->m_normalModeCheckpoints->addObject(l_checkpointObject);
             m_fields->m_activatedCheckpoints.push_back(CheckpointGameObjectReference(m_activatedCheckpoint));
             // autosave
             if (Mod::get()->getSettingValue<bool>("auto-save")) {
-                //log::info("[markCheckpoint] autosave triggered");
                 startSaveGame();
             }
         }
@@ -263,6 +264,11 @@ std::string PSPlayLayer::getSaveFilePath(int i_slot, bool i_checkExists) {
     if (i_slot == -1) {
         i_slot = m_fields->m_saveSlot;
     }
+    // Fallback for cases where slot has not been selected yet.
+    if (i_slot < 0) {
+        i_slot = 0;
+        m_fields->m_saveSlot = 0;
+    }
     return util::filesystem::getSaveFilePath(m_level, i_slot, i_checkExists);
 }
 
@@ -272,20 +278,7 @@ bool PSPlayLayer::validSaveExists() {
 
 #if !defined(GEODE_IS_IOS)
 void PSPlayLayer::setupKeybinds() {
-    addEventListener<keybinds::InvokeBindFilter>(
-        [this](keybinds::InvokeBindEvent* event) {
-            if (event->isDown() && canSave() && startSaveGame()) {
-                PSPauseLayer* l_pauseLayer = static_cast<PSPauseLayer*>(CCScene::get()->getChildByID("PauseLayer"));
-                if (l_pauseLayer) {
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsSprite->setColor({127,127,127});
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsSprite != nullptr && l_pauseLayer->m_fields->m_saveCheckpointsSprite->getChildren()->count() > 0) static_cast<CCSprite*>(l_pauseLayer->m_fields->m_saveCheckpointsSprite->getChildren()->objectAtIndex(0))->setColor({127,127,127});
-                    if (l_pauseLayer->m_fields->m_saveCheckpointsButton != nullptr) l_pauseLayer->m_fields->m_saveCheckpointsButton->m_bEnabled = false;
-                }
-            }
-            return ListenerResult::Propagate;
-        },
-        "save-game"_spr
-    );
+    // Disabled for Geode 5 migration: legacy custom-keybinds hooks are incompatible.
 }
 #endif
 
@@ -386,8 +379,11 @@ bool PSPlayLayer::canSave() {
         return false;
     }
     if (m_fields->m_normalModeCheckpoints->count() > 0) {
+        if (!validSaveExists()) {
+            return true;
+        }
         PSCheckpointObject* l_lastCheckpoint = static_cast<PSCheckpointObject*>(m_fields->m_normalModeCheckpoints->lastObject());
-        return l_lastCheckpoint->m_fields->m_timestamp > m_fields->m_lastSavedCheckpointTimestamp;
+        return l_lastCheckpoint->m_fields->m_timestamp >= m_fields->m_lastSavedCheckpointTimestamp;
     }
     return false;
 }

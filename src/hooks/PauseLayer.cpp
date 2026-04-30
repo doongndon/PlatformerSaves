@@ -60,24 +60,17 @@ void PSPauseLayer::tryQuit(CCObject* i_sender) {
 
 void PSPauseLayer::onQuit(CCObject* i_sender) {
     PSPlayLayer* l_playLayer = static_cast<PSPlayLayer*>(PlayLayer::get());
-    if (l_playLayer && l_playLayer->savesEnabled() && !m_fields->m_cancelSave && l_playLayer->canSave()) {
+    if (
+        l_playLayer &&
+        l_playLayer->savesEnabled() &&
+        !m_fields->m_cancelSave &&
+        l_playLayer->m_fields->m_savingState == SavingState::Ready &&
+        l_playLayer->m_fields->m_normalModeCheckpoints->count() > 0
+    ) {
         l_playLayer->m_fields->m_exitAfterSave = true;
-        createQuickPopup("Exit Level",
-            "Are you sure you want to <cr>exit without saving</c>?",
-            "Exit",
-            "Save",
-            [&](FLAlertLayer*, bool i_btn2) {
-                if (i_btn2) {
-                    onSaveCheckpoints(i_sender);
-                } else {
-                    m_fields->m_cancelSave = true;
-                    PauseLayer::onQuit(i_sender);
-                    m_fields->m_cancelSave = false;
-                }
-                hideAndLockCursor(true);
-            }
-        );
-        return;
+        if (l_playLayer->startSaveGame()) {
+            return;
+        }
     }
 
     PauseLayer::onQuit(i_sender);

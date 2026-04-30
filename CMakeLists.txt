@@ -32,6 +32,9 @@ target_compile_definitions(${PROJECT_NAME}
       $<$<CONFIG:Release>:PS_RELEASE>
       $<$<CONFIG:MinSizeRel>:PS_RELEASE>
 )
+if (MSVC)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE SABE_PA_EXPORTING)
+endif()
 
 option(WITH_PS_DESCRIBE "Log in depth info for saved/loaded classes" OFF)
 option(WITH_PS_SEPARATORS "Add separators between saved fields for debugging purposes" OFF)
@@ -53,11 +56,15 @@ else()
     message(STATUS "Found Geode: $ENV{GEODE_SDK}")
 endif()
 
-target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-microsoft-include")
-target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-invalid-offsetof")
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE "/wd4251")
+else()
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-microsoft-include")
+    target_compile_options(${PROJECT_NAME} PRIVATE "-Wno-invalid-offsetof")
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE src/)
 
 add_subdirectory($ENV{GEODE_SDK} ${CMAKE_CURRENT_BINARY_DIR}/geode)
 
-setup_geode_mod(${PROJECT_NAME} EXTERNALS sabe.persistenceapi)
+setup_geode_mod(${PROJECT_NAME} EXTERNALS sabe.persistenceapi:v1.1.0)

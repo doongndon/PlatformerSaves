@@ -1,3 +1,10 @@
+## v1.1.3
+
+* Ported mod to Geometry Dash 2.2081 and Geode 5.6.1
+* Fixed multiple compatibility issues and crashes on the new version
+* Improved save-on-exit behavior and stability
+* 2.2081 adaptation by BANANCHIKIREAL (original mod by Sabe)
+
 ## v1.1.1
 
 * Fixed a bug that caused incorrect song to play when loading a save

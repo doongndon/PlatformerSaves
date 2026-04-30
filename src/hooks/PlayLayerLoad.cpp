@@ -182,6 +182,10 @@ void PSPlayLayer::loadGame() {
         }
         case LoadingState::ReadCheckpointCount: {
             m_fields->m_stream >> m_fields->m_remainingCheckpointLoadCount;
+            if (m_fields->m_remainingCheckpointLoadCount > 4096) {
+                m_fields->m_loadingState = LoadingState::HandleDidNotFinishSaving;
+                break;
+            }
             m_fields->m_loadingState = LoadingState::ReadCheckpoint;
             // falls through
         }
@@ -237,11 +241,16 @@ void PSPlayLayer::loadGame() {
             hideAndLockCursor(false);
             m_fields->m_loadingState = LoadingState::WaitingForPopup;
             createQuickPopup("Error loading game",
-                "Updating the save file <cr>failed</c>.",
-                "Ok",
-                nullptr,
+                "This save file is from an older incompatible PlatformerSaves version. <cy>Start a new game and remove old save</c>?",
+                "Cancel",
+                "Start New",
                 [&](FLAlertLayer*, bool i_btn2) {
-                    m_fields->m_loadingState = LoadingState::CancelLevelLoad;
+                    if (i_btn2) {
+                        removeSaveFile();
+                        m_fields->m_loadingState = LoadingState::Ready;
+                    } else {
+                        m_fields->m_loadingState = LoadingState::CancelLevelLoad;
+                    }
                     hideAndLockCursor(true);
                 }
             );
