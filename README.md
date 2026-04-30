@@ -1,18 +1,22 @@
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/H2H2ZNXL5)
 
-# PlatformerSaves
+# PlatformerSaves (2.2081 Adaptation)
 
-<img src="./logo.png" alt="PlatformerSaves logo" />
+This is an updated version of the original [PlatformerSaves](https://github.com/0x5abe/PlatformerSaves) mod by Sabe, adapted for Geometry Dash version **2.2081** by **BANANCHIKIREAL**.
 
-PlatformerSaves is a Geometry Dash mod for [Geode](https://geode-sdk.org/) that allows you to save and load your progress in platformer levels.
-
-## Features
+## 🛠 Features
 
 Pick up right where you left off and enjoy taking breaks without having to leave geometry dash open!
 
-- Support on all platforms
-- Checkpoint saving and loading for platformer levels
-- Auto save
+- **Support on all platforms** (Windows, Android, Mac, iOS)
+- **Checkpoint saving and loading** for platformer levels
+- **Auto save**
+- **Settings**: Customizable autosave, editor level support, and more.
+
+## 📦 Requirements
+
+- [Geode](https://geode-sdk.org/) (v5.6.1+)
+- [PersistenceAPI](https://github.com/0x5abe/persistence-api) (v1.1.0)
 
 ## Possible future features
 

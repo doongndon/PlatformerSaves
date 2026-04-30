@@ -1,6 +1,9 @@
-# PlatformerSaves
+# PlatformerSaves (2.2081 Adaptation)
 
-Save and load your progress in platformer levels!
+Save and load your progress in platformer levels! 
+
+**Adapted for Geometry Dash 2.2081 by BANANCHIKIREAL.** 
+Original mod by Sabe.
 
 ## Features
 
