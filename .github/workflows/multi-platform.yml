@@ -25,13 +25,13 @@ jobs:
       - name: Fetch PersistenceAPI from Geode index
         shell: bash
         run: |
-          curl -fL -o sabe.persistenceapi.geode 'https://api.geode-sdk.org/v1/mods/sabe.persistenceapi/versions/1.2.0/download'
+          curl -fL -o "$RUNNER_TEMP/persistenceapi.zip" 'https://api.geode-sdk.org/v1/mods/sabe.persistenceapi/versions/1.2.0/download'
 
       - name: Extract in geode-deps
         shell: bash
         run: |
           mkdir -p build/geode-deps/sabe.persistenceapi
-          7z x './sabe.persistenceapi.geode' '-o./build/geode-deps/sabe.persistenceapi'
+          7z x "$RUNNER_TEMP/persistenceapi.zip" -o./build/geode-deps/sabe.persistenceapi
           echo '{ "required": true }' > build/geode-deps/sabe.persistenceapi/geode-dep-options.json
 
       - name: Build the mod
